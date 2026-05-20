@@ -20,9 +20,8 @@ export const Route = createFileRoute("/")({
       {
         rel: "preload",
         href: "/song.mp3",
-        as: "fetch",
+        as: "audio",
         type: "audio/mpeg",
-        crossOrigin: "anonymous",
       },
     ],
   }),

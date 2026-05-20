@@ -91,6 +91,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
     ],
     links: [
+      { rel: "preconnect", href: "https://fonts.googleapis.com" },
+      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;1,9..144,400&family=Caveat:wght@400;600;700&family=Inter:wght@300;400;500&display=swap",
+      },
       {
         rel: "stylesheet",
         href: appCss,
@@ -98,9 +104,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         rel: "preload",
         href: "/song.mp3",
-        as: "fetch",
+        as: "audio",
         type: "audio/mpeg",
-        crossOrigin: "anonymous",
       },
     ],
   }),
@@ -114,6 +119,7 @@ function RootShell({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <head>
+        <meta httpEquiv="Content-Security-Policy" content="upgrade-insecure-requests" />
         <HeadContent />
       </head>
       <body>
