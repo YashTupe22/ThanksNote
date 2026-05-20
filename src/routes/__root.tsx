@@ -95,6 +95,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: appCss,
       },
+      {
+        rel: "preload",
+        href: "/song.mp3",
+        as: "fetch",
+        type: "audio/mpeg",
+        crossOrigin: "anonymous",
+      },
     ],
   }),
   shellComponent: RootShell,

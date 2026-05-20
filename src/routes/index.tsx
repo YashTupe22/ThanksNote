@@ -1,6 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useState } from "react";
 import { PawIcon, Heart, Sparkle, SittingCat, BlinkingCat, WalkingCat } from "@/components/CatSvgs";
+import {
+  getSongAudio,
+  isSongPaused,
+  pauseSong,
+  playSong,
+  preloadSong,
+} from "@/lib/song-audio";
 
 export const Route = createFileRoute("/")({
   component: SamikshaPage,
@@ -8,6 +15,15 @@ export const Route = createFileRoute("/")({
     meta: [
       { title: "For Samiksha — A Note 🐾" },
       { name: "description", content: "A quiet, kitten-filled note written just for you." },
+    ],
+    links: [
+      {
+        rel: "preload",
+        href: "/song.mp3",
+        as: "fetch",
+        type: "audio/mpeg",
+        crossOrigin: "anonymous",
+      },
     ],
   }),
 });
@@ -25,7 +41,6 @@ const LETTER = [
 ];
 
 function SamikshaPage() {
-  const audioRef = useRef<HTMLAudioElement | null>(null);
   const [musicOn, setMusicOn] = useState(true);
   const [started, setStarted] = useState(false);
   const [scrollY, setScrollY] = useState(0);
@@ -72,11 +87,19 @@ function SamikshaPage() {
     []
   );
 
+  useLayoutEffect(() => {
+    preloadSong();
+  }, []);
+
   useEffect(() => {
-    const a = audioRef.current;
+    const a = getSongAudio();
     if (!a) return;
-    a.volume = 0.45;
-    a.play().then(() => setStarted(true)).catch(() => {});
+    const onPlaying = () => setStarted(true);
+    a.addEventListener("playing", onPlaying);
+    void playSong().then(() => {
+      if (!a.paused) setStarted(true);
+    });
+    return () => a.removeEventListener("playing", onPlaying);
   }, []);
 
   useEffect(() => {
@@ -98,21 +121,25 @@ function SamikshaPage() {
   }, []);
 
   const beginIfNeeded = () => {
-    const a = audioRef.current;
-    if (a && a.paused && musicOn) a.play().catch(() => {});
-    setStarted(true);
+    if (!musicOn) return;
+    void playSong().then(() => setStarted(true));
   };
 
   const toggleMusic = () => {
-    const a = audioRef.current;
-    if (!a) return;
-    if (a.paused) { a.play(); setMusicOn(true); }
-    else { a.pause(); setMusicOn(false); }
+    if (isSongPaused()) {
+      void playSong();
+      setMusicOn(true);
+    } else {
+      pauseSong();
+      setMusicOn(false);
+    }
   };
 
   return (
-    <main onClick={beginIfNeeded} className="relative min-h-screen grain text-ink">
-      <audio ref={audioRef} src="/song.mp3" loop preload="auto" />
+    <main
+      onPointerDown={beginIfNeeded}
+      className="relative min-h-screen grain text-ink"
+    >
 
       {/* Aurora warm blobs */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden -z-10">
@@ -195,6 +222,7 @@ function SamikshaPage() {
 
       {/* Music control */}
       <button
+        onPointerDown={(e) => e.stopPropagation()}
         onClick={(e) => { e.stopPropagation(); toggleMusic(); }}
         className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-full border border-caramel/30 bg-cream/80 px-4 py-2 text-sm text-ink/80 backdrop-blur-md transition hover:bg-cream shadow-lg"
       >
